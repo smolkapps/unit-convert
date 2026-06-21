@@ -1,0 +1,22 @@
+[package]
+name = "unit-convert"
+version = "0.1.0"
+edition = "2021"
+description = "Convert between physical units (length, mass, temperature, data-size, time, area, volume, speed)"
+license = "MIT"
+
+[[bin]]
+name = "unit-convert"
+path = "src/main.rs"
+
+[lib]
+name = "unit_convert"
+path = "src/lib.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+anyhow = "1"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
