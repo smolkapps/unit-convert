@@ -459,6 +459,15 @@ pub const UNITS: &[Unit] = &[
     },
     Unit {
         category: Category::Pressure,
+        factor: 0.001,
+        offset: 0.0,
+        // Distinct from MPa so `mPa`/`MPa` match exactly by case and sloppy
+        // `mpa`/`MPA` become ambiguous (loud error) rather than silently
+        // resolving to megapascal — same pattern as KB/KiB, MB/MiB.
+        symbols: &["mPa", "millipascal", "millipascals"],
+    },
+    Unit {
+        category: Category::Pressure,
         factor: 100_000.0,
         offset: 0.0,
         symbols: &["bar", "bars"],
@@ -979,6 +988,29 @@ mod tests {
     #[test]
     fn inhg_to_mmhg() {
         assert_close!(convert(1.0, "inHg", "mmHg").unwrap(), 25.4);
+    }
+
+    #[test]
+    fn mpa_millipascal_to_pa() {
+        // Millipascal is 1/1000 Pa; must NOT resolve as megapascal (1e6).
+        assert_close!(convert(1.0, "mPa", "Pa").unwrap(), 0.001);
+    }
+
+    #[test]
+    fn mpa_megapascal_to_pa() {
+        // MPa (megapascal) is exactly 1e6 Pa — locks in its factor.
+        assert_close!(convert(1.0, "MPa", "Pa").unwrap(), 1_000_000.0);
+    }
+
+    #[test]
+    fn pressure_symbol_casing_is_exact_then_ambiguous() {
+        // Exact case resolves distinctly (millipascal vs megapascal).
+        assert_close!(convert(1.0, "mPa", "MPa").unwrap(), 1e-9);
+        assert_close!(convert(1.0, "MPa", "mPa").unwrap(), 1e9);
+        // Sloppy casing collides between mPa and MPa -> ambiguous, no silent guess.
+        assert!(find_unit("mpa").is_none(), "mpa must be ambiguous");
+        assert!(find_unit("MPA").is_none(), "MPA must be ambiguous");
+        assert!(convert(1.0, "mpa", "Pa").is_err());
     }
 
     #[test]

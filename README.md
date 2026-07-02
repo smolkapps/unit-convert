@@ -83,7 +83,7 @@ case-sensitive for these prefixes so `KB` and `KiB` never collide.
 **area** (base m2): m2, km2, ft2, acre, ha
 **volume** (base L): L, mL, m3, gal, qt, pt, cup, floz
 **speed** (base m/s): m/s, km/h, mph, kn (knots)
-**pressure** (base Pa): Pa, kPa, hPa, MPa, bar, mbar, atm, psi, mmHg (torr), inHg
+**pressure** (base Pa): Pa, mPa, kPa, hPa, MPa, bar, mbar, atm, psi, mmHg (torr), inHg
 
 Each unit also accepts long-form aliases (e.g. `kilometer`, `pounds`,
 `celsius`, `gibibyte`, `milesperhour`). Run `unit-convert --list` for the full
