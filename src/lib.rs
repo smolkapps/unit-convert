@@ -34,6 +34,7 @@ pub enum Category {
     Area,
     Volume,
     Speed,
+    Pressure,
 }
 
 impl Category {
@@ -48,6 +49,7 @@ impl Category {
             Category::Area => "area",
             Category::Volume => "volume",
             Category::Speed => "speed",
+            Category::Pressure => "pressure",
         }
     }
 
@@ -63,6 +65,7 @@ impl Category {
             Category::Area => "m2",
             Category::Volume => "L",
             Category::Speed => "m/s",
+            Category::Pressure => "Pa",
         }
     }
 
@@ -76,6 +79,7 @@ impl Category {
             Category::Area,
             Category::Volume,
             Category::Speed,
+            Category::Pressure,
         ]
     }
 }
@@ -427,6 +431,71 @@ pub const UNITS: &[Unit] = &[
         factor: 1852.0 / 3600.0,
         offset: 0.0,
         symbols: &["kn", "kt", "knot", "knots"],
+    },
+    // ---- Pressure (base: pascal) ----
+    Unit {
+        category: Category::Pressure,
+        factor: 1.0,
+        offset: 0.0,
+        symbols: &["Pa", "pascal", "pascals"],
+    },
+    Unit {
+        category: Category::Pressure,
+        factor: 1_000.0,
+        offset: 0.0,
+        symbols: &["kPa", "kilopascal", "kilopascals"],
+    },
+    Unit {
+        category: Category::Pressure,
+        factor: 100.0,
+        offset: 0.0,
+        symbols: &["hPa", "hectopascal", "hectopascals"],
+    },
+    Unit {
+        category: Category::Pressure,
+        factor: 1_000_000.0,
+        offset: 0.0,
+        symbols: &["MPa", "megapascal", "megapascals"],
+    },
+    Unit {
+        category: Category::Pressure,
+        factor: 100_000.0,
+        offset: 0.0,
+        symbols: &["bar", "bars"],
+    },
+    Unit {
+        category: Category::Pressure,
+        factor: 100.0,
+        offset: 0.0,
+        symbols: &["mbar", "millibar", "millibars"],
+    },
+    Unit {
+        category: Category::Pressure,
+        // Standard atmosphere, exactly 101325 Pa.
+        factor: 101_325.0,
+        offset: 0.0,
+        symbols: &["atm", "atmosphere", "atmospheres"],
+    },
+    Unit {
+        category: Category::Pressure,
+        // Pounds-force per square inch: 1 lbf / 1 in^2.
+        factor: 6894.757293168361,
+        offset: 0.0,
+        symbols: &["psi", "poundspersquareinch"],
+    },
+    Unit {
+        category: Category::Pressure,
+        // Torr / millimetre of mercury: exactly 1/760 atm, so 1 atm = 760 mmHg.
+        factor: 101_325.0 / 760.0,
+        offset: 0.0,
+        symbols: &["mmHg", "torr", "mmhg"],
+    },
+    Unit {
+        category: Category::Pressure,
+        // Inch of mercury = 25.4 mmHg.
+        factor: 25.4 * 101_325.0 / 760.0,
+        offset: 0.0,
+        symbols: &["inHg", "inhg"],
     },
 ];
 
@@ -873,6 +942,51 @@ mod tests {
         assert_close!(convert(1.0, "cup", "floz").unwrap(), 8.0);
     }
 
+    // ---------- Pressure ----------
+    #[test]
+    fn atm_to_kpa() {
+        assert_close!(convert(1.0, "atm", "kPa").unwrap(), 101.325);
+    }
+
+    #[test]
+    fn atm_to_mmhg_is_760() {
+        // Torr is defined as 1/760 atm, so this is exact by construction.
+        assert_close!(convert(1.0, "atm", "mmHg").unwrap(), 760.0);
+    }
+
+    #[test]
+    fn bar_to_psi() {
+        assert_close!(convert(1.0, "bar", "psi").unwrap(), 14.5037737730);
+    }
+
+    #[test]
+    fn bar_equals_hundred_kpa() {
+        assert_close!(convert(1.0, "bar", "kPa").unwrap(), 100.0);
+    }
+
+    #[test]
+    fn hpa_equals_mbar() {
+        // Weather units: 1 hPa == 1 mbar == 100 Pa.
+        assert_close!(convert(1.0, "hPa", "mbar").unwrap(), 1.0);
+        assert_close!(convert(1013.25, "hPa", "atm").unwrap(), 1.0);
+    }
+
+    #[test]
+    fn psi_to_pa() {
+        assert_close!(convert(1.0, "psi", "Pa").unwrap(), 6894.757293168361);
+    }
+
+    #[test]
+    fn inhg_to_mmhg() {
+        assert_close!(convert(1.0, "inHg", "mmHg").unwrap(), 25.4);
+    }
+
+    #[test]
+    fn pressure_cross_category_errors() {
+        assert!(convert(1.0, "psi", "kg").is_err());
+        assert!(convert(1.0, "bar", "m").is_err());
+    }
+
     // ---------- Cross-category must error ----------
     #[test]
     fn cross_category_errors() {
@@ -908,6 +1022,7 @@ mod tests {
             (90.0, "min", "hr"),
             (2.0, "gal", "L"),
             (273.15, "K", "F"),
+            (2.5, "bar", "psi"),
         ];
         for (v, a, b) in cases {
             let there = convert(v, a, b).unwrap();
