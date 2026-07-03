@@ -6,12 +6,13 @@
 //!   unit-convert 1 GiB to MB
 //!   unit-convert "60 mph" to "km/h"
 //!   unit-convert --precision 3 10 km to mi
-//!   unit-convert --list
+//!   unit-convert list
+//!   unit-convert list length
 //!   unit-convert --list length
 
 use anyhow::Result;
 use clap::Parser;
-use unit_convert::{category_by_name, convert, format_value, list_units, parse_expr};
+use unit_convert::{category_by_name, convert, format_value, list_units, parse_expr, Category};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -24,7 +25,8 @@ use unit_convert::{category_by_name, convert, format_value, list_units, parse_ex
                   unit-convert 100 C to F\n  \
                   unit-convert 1 GiB to MB\n  \
                   unit-convert \"60 mph\" to \"km/h\"\n  \
-                  unit-convert --list length"
+                  unit-convert list\n  \
+                  unit-convert list length"
 )]
 struct Cli {
     /// Significant figures for the result (default 6). 0 means no rounding.
@@ -44,23 +46,38 @@ struct Cli {
     expr: Vec<String>,
 }
 
+/// Resolve an optional category name into the filter passed to `list_units`.
+/// An empty/`None` argument lists every category; anything else must name a
+/// known category.
+fn resolve_list_category(arg: Option<&str>) -> Result<Option<Category>> {
+    match arg {
+        None | Some("") => Ok(None),
+        Some(name) => category_by_name(name).map(Some).ok_or_else(|| {
+            anyhow::anyhow!(
+                "unknown category: '{name}'. Try one of: length, mass, \
+                 temperature, data-size, time, area, volume, speed, pressure"
+            )
+        }),
+    }
+}
+
 fn run() -> Result<()> {
     let cli = Cli::parse();
 
     // --list [category]
     if let Some(cat_arg) = cli.list {
-        if cat_arg.is_empty() {
-            print!("{}", list_units(None));
-        } else {
-            let cat = category_by_name(&cat_arg).ok_or_else(|| {
-                anyhow::anyhow!(
-                    "unknown category: '{cat_arg}'. Try one of: length, mass, \
-                     temperature, data-size, time, area, volume, speed"
-                )
-            })?;
-            print!("{}", list_units(Some(cat)));
-        }
+        let cat = resolve_list_category(Some(cat_arg.as_str()))?;
+        print!("{}", list_units(cat));
         return Ok(());
+    }
+
+    // `list [category]` subcommand — same output as `--list`, nicer to type.
+    if let Some(first) = cli.expr.first() {
+        if first.eq_ignore_ascii_case("list") {
+            let cat = resolve_list_category(cli.expr.get(1).map(String::as_str))?;
+            print!("{}", list_units(cat));
+            return Ok(());
+        }
     }
 
     if cli.expr.is_empty() {

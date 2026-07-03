@@ -2,7 +2,7 @@
 name = "unit-convert"
 version = "0.1.0"
 edition = "2021"
-description = "Convert between physical units (length, mass, temperature, data-size, time, area, volume, speed)"
+description = "Convert between physical units (length, mass, temperature, data-size, time, area, volume, speed, pressure)"
 license = "MIT"
 
 [[bin]]

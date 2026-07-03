@@ -156,6 +156,58 @@ fn list_unknown_category_errors() {
 }
 
 #[test]
+fn list_subcommand_all() {
+    // `list` subcommand mirrors `--list`.
+    bin()
+        .args(["list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("length"))
+        .stdout(predicate::str::contains("pressure"))
+        .stdout(predicate::str::contains("psi"))
+        .stdout(predicate::str::contains("KiB"));
+}
+
+#[test]
+fn list_subcommand_one_category() {
+    bin()
+        .args(["list", "pressure"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("pressure"))
+        .stdout(predicate::str::contains("atm"))
+        .stdout(predicate::str::contains("length").not());
+}
+
+#[test]
+fn list_subcommand_unknown_category_errors() {
+    bin()
+        .args(["list", "bogus"])
+        .assert()
+        .failure()
+        .stderr(predicate::str::contains("unknown category"));
+}
+
+#[test]
+fn pressure_atm_to_kpa() {
+    bin()
+        .args(["1", "atm", "to", "kPa"])
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with("101.325"))
+        .stdout(predicate::str::contains("kPa"));
+}
+
+#[test]
+fn pressure_bar_to_psi() {
+    bin()
+        .args(["1", "bar", "to", "psi"])
+        .assert()
+        .success()
+        .stdout(predicate::str::starts_with("14.5038"));
+}
+
+#[test]
 fn negative_temperature() {
     // 0 K to C = -273.15
     bin()

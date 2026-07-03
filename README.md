@@ -19,6 +19,7 @@ unit-convert 100 C to F           # 212 F
 unit-convert 1 GiB to MB          # 1073.74 MB
 unit-convert "60 mph" to "km/h"   # 96.5606 km/h
 unit-convert 1 acre to m2         # 4046.86 m2
+unit-convert 1 atm to kPa         # 101.325 kPa
 ```
 
 The expression is `VALUE UNIT to UNIT`. You can:
@@ -36,10 +37,14 @@ The expression is `VALUE UNIT to UNIT`. You can:
 | `-V, --version` | Print version. |
 | `-h, --help` | Print help. |
 
+There is also a `list` subcommand that behaves exactly like `--list` but reads
+more naturally:
+
 ```sh
 unit-convert --precision 3 10 km to mi   # 6.21 mi
-unit-convert --list                      # every category and unit
-unit-convert --list temperature          # just one category
+unit-convert list                        # every category and unit
+unit-convert list temperature            # just one category
+unit-convert --list temperature          # same, flag form
 ```
 
 ## How conversion works
@@ -78,6 +83,7 @@ case-sensitive for these prefixes so `KB` and `KiB` never collide.
 **area** (base m2): m2, km2, ft2, acre, ha
 **volume** (base L): L, mL, m3, gal, qt, pt, cup, floz
 **speed** (base m/s): m/s, km/h, mph, kn (knots)
+**pressure** (base Pa): Pa, mPa, kPa, hPa, MPa, bar, mbar, atm, psi, mmHg (torr), inHg
 
 Each unit also accepts long-form aliases (e.g. `kilometer`, `pounds`,
 `celsius`, `gibibyte`, `milesperhour`). Run `unit-convert --list` for the full
